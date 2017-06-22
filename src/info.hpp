@@ -39,7 +39,7 @@ template <typename U, typename C> info<U, C>::info(const std::string &&delim) {
   std::string time_format = "%5.3e";
   time_format_ = new char[time_format.size() + 1];
   std::strcpy(time_format_, time_format.c_str());
-  std::cout << std::scientific << std::setprecision(3);
+  std::cout << std::scientific << std::setprecision(10);
 }
 
 template <typename U, typename C> info<U, C>::~info() { delete[] time_format_; }
