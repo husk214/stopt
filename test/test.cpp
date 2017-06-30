@@ -6,13 +6,18 @@ using namespace Eigen;
 using namespace std;
 
 template <class Rerm>
-void set_parameters(Rerm &r, cmdline::parser &p) {
+void set_parameters_train(Rerm &r, cmdline::parser &p) {
   r.set_parameters(
       static_cast<stopt::regularization_term>(p.get<int>("regularization")),
       static_cast<stopt::loss_term>(p.get<int>("loss")),
       p.get<double>("lambda1"), p.get<double>("lambda2"),
       p.get<double>("gamma"), p.get<double>("criteria"), p.get<int>("maxitr"));
   r.set_minibatch_size(p.get<int>("minibatch"));
+  if (!p.get<bool>("adaptreg")) {
+    r.train();
+  } else {
+    adaptreg<decltype(r), double>(r);
+  }
 }
 
 int main(int argc, char const *argv[]) {
@@ -42,7 +47,8 @@ int main(int argc, char const *argv[]) {
                 1e-9);
   p.add<double>("lambda1", 'x', "Regularization parameter of l1", false, 1e-3);
   p.add<double>("lambda2", 'y', "Regularization parameter of l2", false, 1e-3);
-  p.add<double>("gamma", 'g', "Smoothness parameter of smoothed loss", false, 1.0);
+  p.add<double>("gamma", 'g', "Smoothness parameter of smoothed loss", false,
+                1.0);
   p.add<double>("epsilon", 'e', "Insensitiveness parameter of ", false, 0.1);
   p.add<bool>("adaptreg", 'p', "AdaptReg", false, false);
   p.add<int>("maxitr", 'i', "Maximum outer iteration", false, 10000);
@@ -51,33 +57,22 @@ int main(int argc, char const *argv[]) {
   algorithm sol = static_cast<algorithm>(p.get<int>("algorithm"));
   if (sol == algorithm::spdc) {
     spdc<double> obj(p.get<string>("file"));
-    set_parameters(obj, p);
-    obj.train(sampling::uniform);
+    set_parameters_train(obj, p);
   } else if (sol == algorithm::katyusha) {
     katyusha<double> obj(p.get<string>("file"));
-    set_parameters(obj, p);
-    obj.train();
+    set_parameters_train(obj, p);
   } else if (sol == algorithm::dasvrda) {
     dasvrda<double> obj(p.get<string>("file"));
-    set_parameters(obj, p);
-    obj.train();
+    set_parameters_train(obj, p);
   } else if (sol == algorithm::svrg) {
     svrg<double> obj(p.get<string>("file"));
-    set_parameters(obj, p);
-    if (!p.get<bool>("adaptreg")) {
-      obj.train();
-    } else {
-      adaptreg<svrg<double>> oo;
-      oo.train(obj);
-    }
+    set_parameters_train(obj, p);
   } else if (sol == algorithm::saga) {
     saga<double> obj(p.get<string>("file"));
-    set_parameters(obj, p);
-    obj.train();
+    set_parameters_train(obj, p);
   } else if (sol == algorithm::sdca) {
     sdca<double> obj(p.get<string>("file"));
-    set_parameters(obj, p);
-    obj.train();
+    set_parameters_train(obj, p);
   }
 
   return 0;

@@ -14,7 +14,7 @@ class spdc : public stochastic<_Scalar, Eigen::RowMajor> {
        const bool &remove_zero_vecotr = true, const bool &flag_info = true);
   ~spdc() {}
 
-  void train(const sampling sampling_type = sampling::data_driven);
+  void train(const sampling sampling_type = sampling::uniform);
 
  private:
   _Scalar theta_;

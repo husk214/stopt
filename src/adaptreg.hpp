@@ -6,39 +6,23 @@
 
 namespace stopt {
 
-template <typename _Alg>
-class adaptreg {
-  using r = rerm<double, Eigen::RowMajor>;
-  using s = stochastic<double, Eigen::RowMajor>;
-
- public:
-  adaptreg() {}
-  ~adaptreg() {}
-
-  void train(_Alg &a);
-};
-
-template <typename _Alg>
-void adaptreg<_Alg>::train(_Alg &alg) {
+template <class _Alg, class _Scalar>
+void adaptreg(_Alg &alg, const int max_itr = 1000) {
   info<> info_obj{};
-  alg.set_regularization_term(regularization_term::elastic_net);
-  double mu = 0.01;
-  alg.set_lambda2(mu);
-  double ppv = alg.calc_primal_obj_value();
-  alg.set_dual_var_kkt();
-  double mpv = alg.calc_dual_obj_value();
-  int iitr = 0;
-  for (int itr = 0; itr < 1000; ++itr) {
-    double pre_ppv = alg.calc_primal_obj_value();
-    info_obj.out("outer", ppv, mpv, ppv-mpv);
-    while (ppv - mpv > 0.25 * (pre_ppv - mpv)) {
-      mpv = alg.calc_dual_obj_value();
-      alg.set_dual_var_kkt();
-      ppv = alg.calc_primal_obj_value();
-      info_obj.out(iitr++, ppv - 0.5 * mu * alg.calc_primal_var_sqnorm(), mpv, ppv-mpv);
-    }
-    mu *= 0.5;
+  alg.set_perturbed_algorithm(perturbed_algorithm::adaptreg);
+  alg.set_flag_info(false.);
+  _Scalar mu = 1.0;
+
+  for (int itr = 0; itr < max_itr; ++itr) {
+    alg.set_regularization_term(regularization_term::elastic_net);
     alg.set_lambda2(mu);
+    alg.set_stopping_criteria(alg.calc_primal_obj_value());
+    alg.train();
+    alg.set_regularization_term(regularization_term::l1);
+    alg.calc_duality_gap();
+    info_obj.out_time(itr, alg.get_total_epoch(), alg.get_duality_gap(),
+                      alg.get_primal_obj_value(), alg.get_dual_obj_value(), mu);
+    mu *= 0.5;
   }
 }
 }
