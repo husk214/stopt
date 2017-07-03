@@ -35,7 +35,7 @@ class svrg : public stochastic<_Scalar, Eigen::RowMajor> {
 template <typename _Scalar>
 svrg<_Scalar>::svrg(const std::string &name, const bool &rzv,
                     const bool &flag_info)
-    : stochastic<_Scalar, Eigen::RowMajor>(name, rzv, flag_info){
+    : stochastic<_Scalar, Eigen::RowMajor>(name, rzv, flag_info) {
   r::is_primal_alogrithm_ = true;
   mean_gamma_ = r::gamma_ * r::xi_l2norm_.sum() / r::num_ins_;
   loss_grad_.setZero(r::num_fea_);

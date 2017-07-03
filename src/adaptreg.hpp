@@ -10,7 +10,7 @@ template <class _Alg, class _Scalar>
 void adaptreg(_Alg &alg, const int max_itr = 1000) {
   info<> info_obj{};
   alg.set_perturbed_algorithm(perturbed_algorithm::adaptreg);
-  alg.set_flag_info(false.);
+  alg.set_flag_info(false);
   _Scalar mu = 1.0;
 
   for (int itr = 0; itr < max_itr; ++itr) {

@@ -92,7 +92,8 @@ void stochastic<_Scalar, _Options>::prox_loss_conj(
       // -
       // // r::dual_var_[i])));
       // ai = r::dual_var_[i] + tmp * (s * tmp1 - r::y_[i] * r::dual_var_[i]);
-      ai = std::min(1.0-1e-6, std::max(0.0+1e+6, prox_logistic_conj_newton(s, tmp, i)));
+      ai = std::min(1.0 - 1e-6,
+                    std::max(0.0 + 1e+6, prox_logistic_conj_newton(s, tmp, i)));
       update_yxa_n(r::y_[i] * (ai - r::dual_var_[i]) / r::num_ins_, i);
       break;
     case loss_term::squared:
@@ -140,7 +141,7 @@ _Scalar stochastic<_Scalar, _Options>::prox_logistic_conj_newton(
 
   _Scalar pre = r::dual_var_[i];
   _Scalar ans = f(pre);
-  while (std::abs(pre-ans) > 1e-6) {
+  while (std::abs(pre - ans) > 1e-6) {
     pre = ans;
     ans = f(pre);
   }

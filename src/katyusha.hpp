@@ -65,7 +65,7 @@ void katyusha<_Scalar>::train() {
     if (stop) break;
 
     if (r::lambda2_ == 0.0) {
-      tau1_ = static_cast<_Scalar>(itr+1) / (itr+5);
+      tau1_ = static_cast<_Scalar>(itr + 1) / (itr + 5);
       alpha_ = 1.0 / (3.0 * tau1_ * v::mean_gamma_);
     }
     _Scalar sum_theta = 0.0, thetaj = 1.0 / theta;

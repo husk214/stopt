@@ -73,6 +73,9 @@ int main(int argc, char const *argv[]) {
   } else if (sol == algorithm::sdca) {
     sdca<double> obj(p.get<string>("file"));
     set_parameters_train(obj, p);
+  } else if (sol == algorithm::acc_svrg) {
+    acc_svrg<double> obj(p.get<string>("file"));
+    set_parameters_train(obj, p);
   }
 
   return 0;
