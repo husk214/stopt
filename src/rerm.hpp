@@ -17,7 +17,7 @@ enum class loss_term : int {
   smoothed_insensitve
 };
 
-enum class perturbed_algorithm : int { none, adaptreg };
+enum class perturbed_algorithm : int { none, adaptreg, catalyst };
 
 enum class problem_type : int { classification, regression };
 
@@ -39,6 +39,11 @@ class rerm {
   void set_lambda2(const _Scalar l2);
   void set_stopping_criteria(const _Scalar criteria);
   void set_perturbed_algorithm(const perturbed_algorithm pa);
+  void set_catalyst_kappa(const _Scalar kappa);
+
+  regularization_term get_regularization_type();
+  _Scalar get_lambda1();
+  _Scalar get_lambda2();
 
   _Scalar get_duality_gap();
 
@@ -84,6 +89,11 @@ class rerm {
                         const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &ref,
                         const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &g,
                         Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &ans);
+
+  void prox_regularized_catalyst(
+      const _Scalar coeff, const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &ref,
+      const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &g,
+      Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &ans);
 
   void calc_yxa_n();
 
@@ -134,6 +144,8 @@ class rerm {
   bool flag_info_;
   bool is_primal_alogrithm_;
   perturbed_algorithm perturbed_algorithm_;
+  _Scalar catalyst_kappa_;
+  Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> catalyst_ref_;
 };
 
 template <typename _Scalar, int _Options>
@@ -147,7 +159,8 @@ rerm<_Scalar, _Options>::rerm(const std::string &name, const bool &rzv,
       total_epoch_(0),
       flag_info_(flag_info),
       is_primal_alogrithm_(false),
-      perturbed_algorithm_(perturbed_algorithm::none) {
+      perturbed_algorithm_(perturbed_algorithm::none),
+      catalyst_kappa_(0.0) {
   if (!load_libsvm(x_, y_, name, rzv)) {
     std::cerr << "loading dataset is failed" << std::endl;
   }
@@ -195,6 +208,7 @@ rerm<_Scalar, _Options>::rerm(const std::string &name, const bool &rzv,
 
   primal_var_.setZero(num_fea_);
   dual_var_.setZero(num_ins_);
+  catalyst_ref_.setZero(num_fea_);
 
   margin_.setZero(num_ins_);
   yxa_n_.setZero(num_fea_);
@@ -283,6 +297,27 @@ void rerm<_Scalar, _Options>::set_perturbed_algorithm(
     const perturbed_algorithm pa) {
   perturbed_algorithm_ = pa;
 }
+
+template <typename _Scalar, int _Options>
+void rerm<_Scalar, _Options>::set_catalyst_kappa(const _Scalar kappa) {
+  catalyst_kappa_ = kappa;
+}
+
+template <typename _Scalar, int _Options>
+regularization_term rerm<_Scalar, _Options>::get_regularization_type() {
+  return regularization_term_;
+}
+
+template <typename _Scalar, int _Options>
+_Scalar rerm<_Scalar, _Options>::get_lambda1() {
+  return lambda1_;
+}
+
+template <typename _Scalar, int _Options>
+_Scalar rerm<_Scalar, _Options>::get_lambda2() {
+  return lambda2_;
+}
+
 
 template <typename _Scalar, int _Options>
 _Scalar rerm<_Scalar, _Options>::get_duality_gap() {
@@ -549,6 +584,12 @@ bool rerm<_Scalar, _Options>::check_stopping_criteria() {
                  ? true
                  : false;
       break;
+    case perturbed_algorithm::catalyst:
+      return (primal_obj_value_ - std::max(0.0, dual_obj_value_) <
+              stop_criterion_)
+                 ? true
+                 : false;
+      break;
   }
 }
 
@@ -574,6 +615,49 @@ void rerm<_Scalar, _Options>::prox_regularized(
     const _Scalar coeff, const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &ref,
     const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &g,
     Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &ans) {
+  if (perturbed_algorithm_ == perturbed_algorithm::catalyst) {
+    prox_regularized_catalyst(coeff, ref, g, ans);
+  } else {
+    const _Scalar tmp1 = lambda1_ * coeff;
+    const _Scalar tmp2 = 1.0 / (lambda2_ * coeff + 1.0);
+    _Scalar tmp = 0.0;
+    switch (regularization_term_) {
+      case regularization_term::l1:
+        for (auto j : active_feature_) {
+          tmp = ref.coeff(j) - coeff * g.coeff(j);
+          if (tmp > tmp1) {
+            ans[j] = tmp - tmp1;
+          } else if (tmp < -tmp1) {
+            ans[j] = tmp + tmp1;
+          } else {
+            ans[j] = 0.0;
+          }
+        }
+        break;
+      case regularization_term::squared:
+        ans = (ref - coeff * g) * (1.0 / (1.0 + coeff * lambda2_));
+        break;
+      case regularization_term::elastic_net:
+        for (auto j : active_feature_) {
+          tmp = ref.coeff(j) - coeff * g.coeff(j);
+          if (tmp > tmp1) {
+            ans[j] = (tmp - tmp1) * tmp2;
+          } else if (tmp < -tmp1) {
+            ans[j] = (tmp + tmp1) * tmp2;
+          } else {
+            ans[j] = 0.0;
+          }
+        }
+        break;
+    }
+  }
+}
+
+template <typename _Scalar, int _Options>
+void rerm<_Scalar, _Options>::prox_regularized_catalyst(
+    const _Scalar coeff, const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &ref,
+    const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &g,
+    Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &ans) {
   const _Scalar tmp1 = lambda1_ * coeff;
   const _Scalar tmp2 = 1.0 / (lambda2_ * coeff + 1.0);
   _Scalar tmp = 0.0;
@@ -591,7 +675,8 @@ void rerm<_Scalar, _Options>::prox_regularized(
       }
       break;
     case regularization_term::squared:
-      ans = (ref - coeff * g) * (1.0 / (1.0 + coeff * lambda2_));
+      ans = (ref - coeff * (g + catalyst_kappa_ * catalyst_ref_)) *
+            (1.0 / (1.0 + coeff * (lambda2_ + catalyst_kappa_)));
       break;
     case regularization_term::elastic_net:
       for (auto j : active_feature_) {
@@ -664,6 +749,6 @@ template <typename _Scalar, int _Options>
 _Scalar rerm<_Scalar, _Options>::calc_primal_var_sqnorm() {
   return primal_var_.squaredNorm();
 }
-}
+}  // namespace stopt
 
 #endif
