@@ -3,6 +3,7 @@
 
 #include "acc_svrg.hpp"
 #include "adaptreg.hpp"
+#include "catalyst.hpp"
 #include "dasvrda.hpp"
 #include "katyusha.hpp"
 #include "saga.hpp"
