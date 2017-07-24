@@ -21,7 +21,7 @@ enum class perturbed_algorithm : int { none, adaptreg, catalyst };
 
 enum class problem_type : int { classification, regression };
 
-template <typename _Scalar, int _Options>
+template <typename Scalar, int Options>
 class rerm {
  public:
   rerm(const std::string &data_libsvm_format,
@@ -32,109 +32,118 @@ class rerm {
 
   void set_parameters(
       const regularization_term r = regularization_term::squared,
-      const loss_term l = loss_term::smoothed_hinge, const _Scalar l1 = 1e-3,
-      const _Scalar l2 = 1e-3, const _Scalar gamma = 1.0,
-      const _Scalar stop_criterion = 1e-6, const uint64_t max_itr = 10000);
+      const loss_term l = loss_term::smoothed_hinge, const Scalar l1 = 1e-3,
+      const Scalar l2 = 1e-3, const Scalar gamma = 1.0,
+      const Scalar stop_criterion = 1e-6, const uint64_t max_itr = 10000);
   void set_regularization_term(const regularization_term r);
-  void set_lambda2(const _Scalar l2);
-  void set_stopping_criteria(const _Scalar criteria);
+  void set_lambda2(const Scalar l2);
+  void set_stopping_criteria(const Scalar criteria);
   void set_perturbed_algorithm(const perturbed_algorithm pa);
-  void set_catalyst_kappa(const _Scalar kappa);
+  void set_catalyst_kappa(const Scalar kappa);
+  void set_catalyst_ref(const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> &ref);
+
+  Eigen::Matrix<Scalar, Eigen::Dynamic, 1> get_primal_var();
 
   regularization_term get_regularization_type();
-  _Scalar get_lambda1();
-  _Scalar get_lambda2();
+  uint64_t get_num_ins();
+  uint64_t get_num_fea();
+  Scalar get_lambda1();
+  Scalar get_lambda2();
+  Scalar get_gamma();
 
-  _Scalar get_duality_gap();
+  Scalar get_duality_gap();
 
-  _Scalar get_primal_obj_value();
-  _Scalar get_regularization_value();
-  _Scalar get_loss_value();
+  Scalar get_primal_obj_value();
+  Scalar get_regularization_value();
+  Scalar get_loss_value();
 
-  _Scalar get_dual_obj_value();
-  _Scalar get_conj_regularization_value();
-  _Scalar get_conj_loss_value();
+  Scalar get_dual_obj_value();
+  Scalar get_conj_regularization_value();
+  Scalar get_conj_loss_value();
 
   uint64_t get_total_epoch();
+  Scalar get_stopping_criteria();
 
-  _Scalar calc_primal_obj_value(const bool flag_cal_margin = true);
-  _Scalar calc_regularization_term();
-  _Scalar calc_loss_term(const bool flag_cal_margin);
+  Scalar calc_primal_obj_value(const bool flag_cal_margin = true);
+  Scalar calc_regularization_term();
+  Scalar calc_regularization_term_catalyst();
+  Scalar calc_loss_term(const bool flag_cal_margin);
 
-  _Scalar calc_smoothed_hinge_loss(const bool flag_cal_margin);
-  _Scalar calc_squared_hinge_loss(const bool flag_cal_margin);
-  _Scalar calc_logistic_loss(const bool flag_cal_margin);
-  _Scalar calc_squared_loss(const bool flag_cal_margin);
-  _Scalar calc_smoothed_insensitive_loss(const bool flag_cal_margin);
+  Scalar calc_smoothed_hinge_loss(const bool flag_cal_margin);
+  Scalar calc_squared_hinge_loss(const bool flag_cal_margin);
+  Scalar calc_logistic_loss(const bool flag_cal_margin);
+  Scalar calc_squared_loss(const bool flag_cal_margin);
+  Scalar calc_smoothed_insensitive_loss(const bool flag_cal_margin);
 
-  _Scalar calc_duality_gap();
+  Scalar calc_duality_gap();
 
-  _Scalar calc_dual_obj_value(const bool flag_cal_yxa_n = true);
-  _Scalar calc_conj_regularization_term(const bool flag_cal_yxa_n);
-  _Scalar calc_conj_loss_term(
-      const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &dv);
+  Scalar calc_dual_obj_value(const bool flag_cal_yxa_n = true);
+  Scalar calc_conj_regularization_term(const bool flag_cal_yxa_n);
+  Scalar calc_conj_regularization_term_catalyst(const bool flag_cal_yxa_n);
+  Scalar calc_conj_loss_term(
+      const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> &dv);
 
   void set_dual_var_kkt();
   void set_primal_var_kkt();
-  _Scalar calc_primal_var_sqnorm();
+  Scalar calc_primal_var_sqnorm();
 
  protected:
   bool check_stopping_criteria();
 
-  _Scalar calc_ip_primal_var_xi(const uint64_t i);
-  _Scalar calc_ip_v_xi(const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &v,
-                       const uint64_t i);
+  Scalar calc_ip_primal_var_xi(const uint64_t i);
+  Scalar calc_ip_v_xi(const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> &v,
+                      const uint64_t i);
 
-  void prox_regularized(const _Scalar coeff,
-                        const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &ref,
-                        const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &g,
-                        Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &ans);
+  void prox_regularized(const Scalar coeff,
+                        const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> &ref,
+                        const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> &g,
+                        Eigen::Matrix<Scalar, Eigen::Dynamic, 1> &ans);
 
   void prox_regularized_catalyst(
-      const _Scalar coeff, const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &ref,
-      const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &g,
-      Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &ans);
+      const Scalar coeff, const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> &ref,
+      const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> &g,
+      Eigen::Matrix<Scalar, Eigen::Dynamic, 1> &ans);
 
   void calc_yxa_n();
 
-  Eigen::SparseMatrix<_Scalar, _Options, std::ptrdiff_t> x_;
-  Eigen::Array<_Scalar, Eigen::Dynamic, 1> y_;
-  Eigen::Array<_Scalar, Eigen::Dynamic, 1> margin_;
-  Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> yxa_n_;
+  Eigen::SparseMatrix<Scalar, Options, std::ptrdiff_t> x_;
+  Eigen::Array<Scalar, Eigen::Dynamic, 1> y_;
+  Eigen::Array<Scalar, Eigen::Dynamic, 1> margin_;
+  Eigen::Matrix<Scalar, Eigen::Dynamic, 1> yxa_n_;
 
   uint64_t num_ins_;
   uint64_t num_fea_;
 
-  _Scalar lambda1_;  // regularization parameter for l1
-  _Scalar lambda2_;  // regularization parameter for squared
-  _Scalar lambda_max_;
+  Scalar lambda1_;  // regularization parameter for l1
+  Scalar lambda2_;  // regularization parameter for squared
+  Scalar lambda_max_;
 
-  _Scalar lambda_;   // regularization function is lambda - strongly convex
-  _Scalar gamma_;    // loss function is 1/gamma - smooth
-  _Scalar epsilon_;  // epsilon in insensitive or huber loss
+  Scalar lambda_;   // regularization function is lambda - strongly convex
+  Scalar gamma_;    // loss function is 1/gamma - smooth
+  Scalar epsilon_;  // epsilon in insensitive or huber loss
 
   regularization_term regularization_term_;
   loss_term loss_term_;
   problem_type problem_type_;
 
-  _Scalar primal_obj_value_;
-  _Scalar regularization_value_;
-  _Scalar loss_value_;
+  Scalar primal_obj_value_;
+  Scalar regularization_value_;
+  Scalar loss_value_;
 
-  _Scalar dual_obj_value_;
-  _Scalar conj_regularization_value_;
-  _Scalar conj_loss_value_;
+  Scalar dual_obj_value_;
+  Scalar conj_regularization_value_;
+  Scalar conj_loss_value_;
 
-  _Scalar duality_gap_;
+  Scalar duality_gap_;
 
-  _Scalar stop_criterion_;
+  Scalar stop_criterion_;
   uint64_t max_itr_;
   uint64_t total_epoch_;
 
-  Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> primal_var_;
-  Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> dual_var_;
-  Eigen::Array<_Scalar, Eigen::Dynamic, 1> xi_l2norm_;
-  _Scalar max_xi_norm_;
+  Eigen::Matrix<Scalar, Eigen::Dynamic, 1> primal_var_;
+  Eigen::Matrix<Scalar, Eigen::Dynamic, 1> dual_var_;
+  Eigen::Array<Scalar, Eigen::Dynamic, 1> xi_l2norm_;
+  Scalar max_xi_norm_;
 
   uint64_t num_act_ins_;
   uint64_t num_act_fea_;
@@ -144,13 +153,13 @@ class rerm {
   bool flag_info_;
   bool is_primal_alogrithm_;
   perturbed_algorithm perturbed_algorithm_;
-  _Scalar catalyst_kappa_;
-  Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> catalyst_ref_;
+  Scalar catalyst_kappa_;
+  Eigen::Matrix<Scalar, Eigen::Dynamic, 1> catalyst_ref_;
 };
 
-template <typename _Scalar, int _Options>
-rerm<_Scalar, _Options>::rerm(const std::string &name, const bool &rzv,
-                              const bool &flag_info)
+template <typename Scalar, int Options>
+rerm<Scalar, Options>::rerm(const std::string &name, const bool &rzv,
+                            const bool &flag_info)
     : gamma_(1.0),
       regularization_term_(regularization_term::squared),
       loss_term_(loss_term::smoothed_hinge),
@@ -167,15 +176,15 @@ rerm<_Scalar, _Options>::rerm(const std::string &name, const bool &rzv,
 
   num_ins_ = static_cast<uint64_t>(x_.rows());
   num_fea_ = static_cast<uint64_t>(x_.cols());
-  _Scalar tmp = 0.0;
+  Scalar tmp = 0.0;
   lambda_max_ = 0.0;
   xi_l2norm_.resize(num_ins_);
   xi_l2norm_.setZero();
   max_xi_norm_ = 0.0;
-  if (_Options == Eigen::RowMajor) {
-    std::vector<_Scalar> xj_sum(num_fea_, 0.0);
+  if (Options == Eigen::RowMajor) {
+    std::vector<Scalar> xj_sum(num_fea_, 0.0);
     for (uint64_t i = 0; i < num_ins_; ++i) {
-      for (sm_iit<_Scalar, _Options> it(x_, i); it; ++it) {
+      for (sm_iit<Scalar, Options> it(x_, i); it; ++it) {
         tmp = it.value();
         xi_l2norm_[i] += tmp * tmp;
         xj_sum[it.index()] += tmp;
@@ -186,10 +195,10 @@ rerm<_Scalar, _Options>::rerm(const std::string &name, const bool &rzv,
     for (uint64_t j = 0; j < num_fea_; ++j)
       lambda_max_ = std::max(lambda_max_, xj_sum[j]);
     lambda_max_ /= num_ins_;
-  } else if (_Options == Eigen::ColMajor) {
+  } else if (Options == Eigen::ColMajor) {
     for (uint64_t j = 0; j < num_fea_; ++j) {
-      _Scalar xj_sum = 0.0;
-      for (sm_iit<_Scalar, _Options> it(x_, j); it; ++it) {
+      Scalar xj_sum = 0.0;
+      for (sm_iit<Scalar, Options> it(x_, j); it; ++it) {
         tmp = it.value();
         xj_sum += tmp;
         xi_l2norm_[it.index()] += tmp * tmp;
@@ -222,17 +231,16 @@ rerm<_Scalar, _Options>::rerm(const std::string &name, const bool &rzv,
   std::iota(std::begin(active_feature_), std::end(active_feature_), 0);
 }
 
-template <typename _Scalar, int _Options>
-void rerm<_Scalar, _Options>::set_flag_info(const bool flag) {
+template <typename Scalar, int Options>
+void rerm<Scalar, Options>::set_flag_info(const bool flag) {
   flag_info_ = flag;
 }
 
-template <typename _Scalar, int _Options>
-void rerm<_Scalar, _Options>::set_parameters(const regularization_term r,
-                                             const loss_term l,
-                                             const _Scalar l1, const _Scalar l2,
-                                             const _Scalar g, const _Scalar s,
-                                             const uint64_t i) {
+template <typename Scalar, int Options>
+void rerm<Scalar, Options>::set_parameters(const regularization_term r,
+                                           const loss_term l, const Scalar l1,
+                                           const Scalar l2, const Scalar g,
+                                           const Scalar s, const uint64_t i) {
   regularization_term_ = r;
   loss_term_ = l;
   stop_criterion_ = s;
@@ -276,117 +284,175 @@ void rerm<_Scalar, _Options>::set_parameters(const regularization_term r,
   }
 }
 
-template <typename _Scalar, int _Options>
-void rerm<_Scalar, _Options>::set_regularization_term(
+template <typename Scalar, int Options>
+void rerm<Scalar, Options>::set_regularization_term(
     const regularization_term r) {
   regularization_term_ = r;
 }
 
-template <typename _Scalar, int _Options>
-void rerm<_Scalar, _Options>::set_lambda2(const _Scalar l2) {
+template <typename Scalar, int Options>
+void rerm<Scalar, Options>::set_lambda2(const Scalar l2) {
   lambda2_ = l2;
 }
 
-template <typename _Scalar, int _Options>
-void rerm<_Scalar, _Options>::set_stopping_criteria(const _Scalar criteria) {
+template <typename Scalar, int Options>
+void rerm<Scalar, Options>::set_stopping_criteria(const Scalar criteria) {
   stop_criterion_ = criteria;
 }
 
-template <typename _Scalar, int _Options>
-void rerm<_Scalar, _Options>::set_perturbed_algorithm(
+template <typename Scalar, int Options>
+void rerm<Scalar, Options>::set_perturbed_algorithm(
     const perturbed_algorithm pa) {
   perturbed_algorithm_ = pa;
 }
 
-template <typename _Scalar, int _Options>
-void rerm<_Scalar, _Options>::set_catalyst_kappa(const _Scalar kappa) {
+template <typename Scalar, int Options>
+void rerm<Scalar, Options>::set_catalyst_kappa(const Scalar kappa) {
   catalyst_kappa_ = kappa;
 }
 
-template <typename _Scalar, int _Options>
-regularization_term rerm<_Scalar, _Options>::get_regularization_type() {
+template <typename Scalar, int Options>
+void rerm<Scalar, Options>::set_catalyst_ref(
+    const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> &ref) {
+  catalyst_ref_ = ref;
+}
+
+template <typename Scalar, int Options>
+Eigen::Matrix<Scalar, Eigen::Dynamic, 1>
+rerm<Scalar, Options>::get_primal_var() {
+  return primal_var_;
+}
+
+template <typename Scalar, int Options>
+regularization_term rerm<Scalar, Options>::get_regularization_type() {
   return regularization_term_;
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::get_lambda1() {
+template <typename Scalar, int Options>
+uint64_t rerm<Scalar, Options>::get_num_ins() {
+  return num_ins_;
+}
+
+template <typename Scalar, int Options>
+uint64_t rerm<Scalar, Options>::get_num_fea() {
+  return num_fea_;
+}
+
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::get_lambda1() {
   return lambda1_;
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::get_lambda2() {
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::get_lambda2() {
   return lambda2_;
 }
 
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::get_gamma() {
+  return gamma_;
+}
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::get_duality_gap() {
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::get_duality_gap() {
   return duality_gap_;
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::get_primal_obj_value() {
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::get_primal_obj_value() {
   return primal_obj_value_;
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::get_regularization_value() {
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::get_regularization_value() {
   return regularization_value_;
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::get_loss_value() {
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::get_loss_value() {
   return loss_value_;
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::get_dual_obj_value() {
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::get_dual_obj_value() {
   return dual_obj_value_;
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::get_conj_regularization_value() {
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::get_conj_regularization_value() {
   return conj_regularization_value_;
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::get_conj_loss_value() {
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::get_conj_loss_value() {
   return conj_loss_value_;
 }
 
-template <typename _Scalar, int _Options>
-uint64_t rerm<_Scalar, _Options>::get_total_epoch() {
+template <typename Scalar, int Options>
+uint64_t rerm<Scalar, Options>::get_total_epoch() {
   return total_epoch_;
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::calc_primal_obj_value(
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::get_stopping_criteria() {
+  return stop_criterion_;
+}
+
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::calc_primal_obj_value(
     const bool flag_cal_margin) {
   primal_obj_value_ =
       calc_regularization_term() + calc_loss_term(flag_cal_margin);
   return primal_obj_value_;
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::calc_regularization_term() {
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::calc_regularization_term() {
+  if (perturbed_algorithm_ == perturbed_algorithm::catalyst) {
+    return calc_regularization_term_catalyst();
+  } else {
+    regularization_value_ = 0.0;
+    switch (regularization_term_) {
+      case regularization_term::squared:
+        regularization_value_ = 0.5 * lambda2_ * primal_var_.squaredNorm();
+        break;
+      case regularization_term::l1:
+        regularization_value_ = lambda1_ * primal_var_.template lpNorm<1>();
+        break;
+      case regularization_term::elastic_net:
+        regularization_value_ = 0.5 * lambda2_ * primal_var_.squaredNorm() +
+                                lambda1_ * primal_var_.template lpNorm<1>();
+        break;
+    }
+    return regularization_value_;
+  }
+}
+
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::calc_regularization_term_catalyst() {
   regularization_value_ = 0.0;
   switch (regularization_term_) {
     case regularization_term::squared:
-      regularization_value_ = 0.5 * lambda2_ * primal_var_.squaredNorm();
+      regularization_value_ =
+          0.5 * (lambda2_ + catalyst_kappa_) * primal_var_.squaredNorm();
       break;
     case regularization_term::l1:
-      regularization_value_ = lambda1_ * primal_var_.template lpNorm<1>();
+      regularization_value_ = lambda1_ * primal_var_.template lpNorm<1>() +
+                              0.5 * catalyst_kappa_ * primal_var_.squaredNorm();
       break;
     case regularization_term::elastic_net:
-      regularization_value_ = 0.5 * lambda2_ * primal_var_.squaredNorm() +
-                              lambda1_ * primal_var_.template lpNorm<1>();
+      regularization_value_ =
+          0.5 * (lambda2_ + catalyst_kappa_) * primal_var_.squaredNorm() +
+          lambda1_ * primal_var_.template lpNorm<1>();
       break;
   }
+  regularization_value_ -= catalyst_kappa_ * (primal_var_.dot(catalyst_ref_));
   return regularization_value_;
+         
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::calc_loss_term(const bool flag_cal_margin) {
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::calc_loss_term(const bool flag_cal_margin) {
   loss_value_ = 0.0;
   switch (loss_term_) {
     case loss_term::smoothed_hinge:
@@ -408,12 +474,12 @@ _Scalar rerm<_Scalar, _Options>::calc_loss_term(const bool flag_cal_margin) {
   return loss_value_;
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::calc_smoothed_hinge_loss(
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::calc_smoothed_hinge_loss(
     const bool flag_cal_margin) {
   if (flag_cal_margin) margin_ = 1.0 - y_ * (x_ * primal_var_).array();
-  _Scalar sum_loss = 0.0, tmp = 0.0;
-  const _Scalar p5g = 0.5 * gamma_, p5og = 0.5 / gamma_;
+  Scalar sum_loss = 0.0, tmp = 0.0;
+  const Scalar p5g = 0.5 * gamma_, p5og = 0.5 / gamma_;
   for (uint64_t i = 0; i < num_ins_; ++i) {
     tmp = margin_[i];
     if (tmp > gamma_) {
@@ -425,27 +491,26 @@ _Scalar rerm<_Scalar, _Options>::calc_smoothed_hinge_loss(
   return sum_loss / num_ins_;
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::calc_squared_hinge_loss(
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::calc_squared_hinge_loss(
     const bool flag_cal_margin) {
   if (flag_cal_margin) margin_ = 1.0 - y_ * (x_ * primal_var_).array();
   return margin_.cwiseMax(0.0).square().sum() * (0.5 / num_ins_);
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::calc_logistic_loss(
-    const bool flag_cal_margin) {
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::calc_logistic_loss(const bool flag_cal_margin) {
   if (flag_cal_margin) margin_ = (-y_ * (x_ * primal_var_).array()).exp();
   return (1.0 + margin_).log().sum() / num_ins_;
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::calc_smoothed_insensitive_loss(
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::calc_smoothed_insensitive_loss(
     const bool flag_cal_margin) {
   if (flag_cal_margin) margin_ = (y_ - (x_ * primal_var_).array());
-  _Scalar loss = 0.0, tmpi = 0.0;
-  const _Scalar tmp1 = 0.5 * gamma_;
-  const _Scalar tmp2 = 0.5 / gamma_;
+  Scalar loss = 0.0, tmpi = 0.0;
+  const Scalar tmp1 = 0.5 * gamma_;
+  const Scalar tmp2 = 0.5 / gamma_;
   for (int i = 0; i < num_ins_; ++i) {
     tmpi = std::abs(margin_[i]) - epsilon_;
     if (tmpi > gamma_) {
@@ -457,59 +522,98 @@ _Scalar rerm<_Scalar, _Options>::calc_smoothed_insensitive_loss(
   return loss / num_ins_;
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::calc_squared_loss(const bool flag_cal_margin) {
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::calc_squared_loss(const bool flag_cal_margin) {
   if (flag_cal_margin) margin_ = (y_ - (x_ * primal_var_).array());
   return 0.5 * margin_.square().sum() / num_ins_;
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::calc_duality_gap() {
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::calc_duality_gap() {
   duality_gap_ = calc_primal_obj_value();
   if (is_primal_alogrithm_) set_dual_var_kkt();
   duality_gap_ -= calc_dual_obj_value();
   return duality_gap_;
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::calc_dual_obj_value(
-    const bool flag_cal_yxa_n) {
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::calc_dual_obj_value(const bool flag_cal_yxa_n) {
   dual_obj_value_ = -calc_conj_regularization_term(flag_cal_yxa_n) -
                     calc_conj_loss_term(dual_var_);
   return dual_obj_value_;
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::calc_conj_regularization_term(
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::calc_conj_regularization_term(
+    const bool flag_cal_yxa_n) {
+  if (perturbed_algorithm_ == perturbed_algorithm::catalyst) {
+    return calc_conj_regularization_term_catalyst(flag_cal_yxa_n);
+  } else {
+    conj_regularization_value_ = 0.0;
+    Scalar tmp = 0.0;
+    switch (regularization_term_) {
+      case regularization_term::l1:
+        if (flag_cal_yxa_n) calc_yxa_n();
+        conj_regularization_value_ = calc_conj_loss_term(
+            dual_var_ * (1.0 / (yxa_n_.maxCoeff() / lambda1_)));
+        conj_regularization_value_ -= calc_conj_loss_term(dual_var_);
+        break;
+      case regularization_term::squared:
+        if (flag_cal_yxa_n) calc_yxa_n();
+        conj_regularization_value_ = (0.5 / lambda2_) * yxa_n_.squaredNorm();
+        break;
+      case regularization_term::elastic_net:
+        if (flag_cal_yxa_n) calc_yxa_n();
+        for (auto j : active_feature_) {
+          tmp = std::max(0.0, std::abs(yxa_n_.coeff(j)) - lambda1_);
+          conj_regularization_value_ += tmp * tmp;
+        }
+        conj_regularization_value_ *= 0.5 / lambda2_;
+        break;
+    }
+    return conj_regularization_value_;
+  }
+}
+
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::calc_conj_regularization_term_catalyst(
     const bool flag_cal_yxa_n) {
   conj_regularization_value_ = 0.0;
-  _Scalar tmp = 0.0;
+  Scalar tmp = 0.0;
   switch (regularization_term_) {
     case regularization_term::l1:
       if (flag_cal_yxa_n) calc_yxa_n();
-      conj_regularization_value_ = calc_conj_loss_term(
-          dual_var_ * (1.0 / (yxa_n_.maxCoeff() / lambda1_)));
-      conj_regularization_value_ -= calc_conj_loss_term(dual_var_);
+      for (auto j : active_feature_) {
+        tmp = std::max(0.0, -lambda1_ + std::abs(yxa_n_.coeff(j) +
+                                                 catalyst_kappa_ *
+                                                     catalyst_ref_.coeff(j)));        
+        conj_regularization_value_ += tmp * tmp;
+      }
+      conj_regularization_value_ *= 0.5 / catalyst_kappa_;      
       break;
     case regularization_term::squared:
       if (flag_cal_yxa_n) calc_yxa_n();
-      conj_regularization_value_ = (0.5 / lambda2_) * yxa_n_.squaredNorm();
+      conj_regularization_value_ =
+          (0.5 / (lambda2_ + catalyst_kappa_)) *
+          (yxa_n_ + catalyst_kappa_ * catalyst_ref_).squaredNorm();
       break;
     case regularization_term::elastic_net:
       if (flag_cal_yxa_n) calc_yxa_n();
       for (auto j : active_feature_) {
-        tmp = std::max(0.0, std::abs(yxa_n_.coeff(j)) - lambda1_);
+        tmp = std::max(0.0, -lambda1_ + std::abs(yxa_n_.coeff(j) +
+                                                 catalyst_kappa_ *
+                                                     catalyst_ref_.coeff(j)));
         conj_regularization_value_ += tmp * tmp;
       }
-      conj_regularization_value_ *= 0.5 / lambda2_;
+      conj_regularization_value_ *= 0.5 / (lambda2_ + catalyst_kappa_);
       break;
   }
   return conj_regularization_value_;
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::calc_conj_loss_term(
-    const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &dv) {
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::calc_conj_loss_term(
+    const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> &dv) {
   conj_loss_value_ = 0.0;
   switch (loss_term_) {
     case loss_term::smoothed_hinge:
@@ -539,12 +643,12 @@ _Scalar rerm<_Scalar, _Options>::calc_conj_loss_term(
   return conj_loss_value_;
 }
 
-template <typename _Scalar, int _Options>
-void rerm<_Scalar, _Options>::calc_yxa_n() {
+template <typename Scalar, int Options>
+void rerm<Scalar, Options>::calc_yxa_n() {
   yxa_n_.setZero();
-  _Scalar tmp = 0.0;
-  const _Scalar one_n = 1.0 / num_ins_;
-  if (_Options == Eigen::RowMajor) {
+  Scalar tmp = 0.0;
+  const Scalar one_n = 1.0 / num_ins_;
+  if (Options == Eigen::RowMajor) {
     for (uint64_t i = 0; i < num_ins_; ++i) {
       if (dual_var_[i] != 0.0) {
         switch (problem_type_) {
@@ -555,11 +659,11 @@ void rerm<_Scalar, _Options>::calc_yxa_n() {
             tmp = dual_var_[i] * one_n;
             break;
         }
-        for (sm_iit<_Scalar, _Options> it(x_, i); it; ++it)
+        for (sm_iit<Scalar, Options> it(x_, i); it; ++it)
           yxa_n_[it.index()] += tmp * it.value();
       }
     }
-  } else if (_Options == Eigen::ColMajor) {
+  } else if (Options == Eigen::ColMajor) {
     switch (problem_type_) {
       case problem_type::classification:
         yxa_n_ = x_.transpose() * (one_n * (y_ * dual_var_.array())).matrix();
@@ -571,8 +675,8 @@ void rerm<_Scalar, _Options>::calc_yxa_n() {
   }
 }
 
-template <typename _Scalar, int _Options>
-bool rerm<_Scalar, _Options>::check_stopping_criteria() {
+template <typename Scalar, int Options>
+bool rerm<Scalar, Options>::check_stopping_criteria() {
   ++total_epoch_;
   calc_duality_gap();
   switch (perturbed_algorithm_) {
@@ -593,34 +697,34 @@ bool rerm<_Scalar, _Options>::check_stopping_criteria() {
   }
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::calc_ip_primal_var_xi(const uint64_t i) {
-  _Scalar value = 0.0;
-  for (sm_iit<_Scalar, _Options> it(x_, i); it; ++it)
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::calc_ip_primal_var_xi(const uint64_t i) {
+  Scalar value = 0.0;
+  for (sm_iit<Scalar, Options> it(x_, i); it; ++it)
     value += primal_var_.coeff(it.index()) * it.value();
   return value;
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::calc_ip_v_xi(
-    const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &v, const uint64_t i) {
-  _Scalar value = 0.0;
-  for (sm_iit<_Scalar, _Options> it(x_, i); it; ++it)
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::calc_ip_v_xi(
+    const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> &v, const uint64_t i) {
+  Scalar value = 0.0;
+  for (sm_iit<Scalar, Options> it(x_, i); it; ++it)
     value += v.coeff(it.index()) * it.value();
   return value;
 }
 
-template <typename _Scalar, int _Options>
-void rerm<_Scalar, _Options>::prox_regularized(
-    const _Scalar coeff, const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &ref,
-    const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &g,
-    Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &ans) {
+template <typename Scalar, int Options>
+void rerm<Scalar, Options>::prox_regularized(
+    const Scalar coeff, const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> &ref,
+    const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> &g,
+    Eigen::Matrix<Scalar, Eigen::Dynamic, 1> &ans) {
   if (perturbed_algorithm_ == perturbed_algorithm::catalyst) {
     prox_regularized_catalyst(coeff, ref, g, ans);
   } else {
-    const _Scalar tmp1 = lambda1_ * coeff;
-    const _Scalar tmp2 = 1.0 / (lambda2_ * coeff + 1.0);
-    _Scalar tmp = 0.0;
+    const Scalar tmp1 = lambda1_ * coeff;
+    const Scalar tmp2 = 1.0 / (lambda2_ * coeff + 1.0);
+    Scalar tmp = 0.0;
     switch (regularization_term_) {
       case regularization_term::l1:
         for (auto j : active_feature_) {
@@ -653,14 +757,14 @@ void rerm<_Scalar, _Options>::prox_regularized(
   }
 }
 
-template <typename _Scalar, int _Options>
-void rerm<_Scalar, _Options>::prox_regularized_catalyst(
-    const _Scalar coeff, const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &ref,
-    const Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &g,
-    Eigen::Matrix<_Scalar, Eigen::Dynamic, 1> &ans) {
-  const _Scalar tmp1 = lambda1_ * coeff;
-  const _Scalar tmp2 = 1.0 / (lambda2_ * coeff + 1.0);
-  _Scalar tmp = 0.0;
+template <typename Scalar, int Options>
+void rerm<Scalar, Options>::prox_regularized_catalyst(
+    const Scalar coeff, const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> &ref,
+    const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> &g,
+    Eigen::Matrix<Scalar, Eigen::Dynamic, 1> &ans) {
+  const Scalar tmp1 = lambda1_ * coeff;
+  const Scalar tmp2 = 1.0 / (lambda2_ * coeff + 1.0 + coeff * catalyst_kappa_);
+  Scalar tmp = 0.0;
   switch (regularization_term_) {
     case regularization_term::l1:
       for (auto j : active_feature_) {
@@ -675,12 +779,13 @@ void rerm<_Scalar, _Options>::prox_regularized_catalyst(
       }
       break;
     case regularization_term::squared:
-      ans = (ref - coeff * (g + catalyst_kappa_ * catalyst_ref_)) *
+      ans = (ref - coeff * (g - catalyst_kappa_ * catalyst_ref_)) *
             (1.0 / (1.0 + coeff * (lambda2_ + catalyst_kappa_)));
       break;
     case regularization_term::elastic_net:
       for (auto j : active_feature_) {
-        tmp = ref.coeff(j) - coeff * g.coeff(j);
+        tmp = ref.coeff(j) - coeff * g.coeff(j) +
+              coeff * catalyst_kappa_ * catalyst_ref_.coeff(j);
         if (tmp > tmp1) {
           ans[j] = (tmp - tmp1) * tmp2;
         } else if (tmp < -tmp1) {
@@ -693,8 +798,8 @@ void rerm<_Scalar, _Options>::prox_regularized_catalyst(
   }
 }
 
-template <typename _Scalar, int _Options>
-void rerm<_Scalar, _Options>::set_dual_var_kkt() {
+template <typename Scalar, int Options>
+void rerm<Scalar, Options>::set_dual_var_kkt() {
   const double one_over_gam = 1.0 / gamma_;
   switch (loss_term_) {
     case loss_term::smoothed_hinge:
@@ -727,9 +832,9 @@ void rerm<_Scalar, _Options>::set_dual_var_kkt() {
   }
 }
 
-template <typename _Scalar, int _Options>
-void rerm<_Scalar, _Options>::set_primal_var_kkt() {
-  const _Scalar one_lambda2 = 1.0 / lambda2_;
+template <typename Scalar, int Options>
+void rerm<Scalar, Options>::set_primal_var_kkt() {
+  const Scalar one_lambda2 = 1.0 / lambda2_;
   switch (regularization_term_) {
     case regularization_term::squared:
       primal_var_ = one_lambda2 * yxa_n_;
@@ -745,8 +850,8 @@ void rerm<_Scalar, _Options>::set_primal_var_kkt() {
   }
 }
 
-template <typename _Scalar, int _Options>
-_Scalar rerm<_Scalar, _Options>::calc_primal_var_sqnorm() {
+template <typename Scalar, int Options>
+Scalar rerm<Scalar, Options>::calc_primal_var_sqnorm() {
   return primal_var_.squaredNorm();
 }
 }  // namespace stopt

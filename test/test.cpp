@@ -1,5 +1,6 @@
 #include "algorithm.h"
 #include "cmdline.h"
+#include "catalyst.hpp"
 
 using namespace stopt;
 using namespace Eigen;
@@ -13,10 +14,12 @@ void set_parameters_train(Rerm &r, cmdline::parser &p) {
       p.get<double>("lambda1"), p.get<double>("lambda2"),
       p.get<double>("gamma"), p.get<double>("criteria"), p.get<int>("maxitr"));
   r.set_minibatch_size(p.get<int>("minibatch"));
-  if (!p.get<bool>("adaptreg")) {
-    r.train();
-  } else {
+  if (p.get<bool>("adaptreg")) {
     adaptreg<decltype(r), double>(r);
+  } else if (p.get<bool>("catalyst")) {
+    catalyst<decltype(r), double>(r);
+  } else {
+    r.train();    
   }
 }
 
@@ -51,6 +54,7 @@ int main(int argc, char const *argv[]) {
                 1.0);
   p.add<double>("epsilon", 'e', "Insensitiveness parameter of ", false, 0.1);
   p.add<bool>("adaptreg", 'p', "AdaptReg", false, false);
+  p.add<bool>("catalyst", 's', "Catalyst", false, false);
   p.add<int>("maxitr", 'i', "Maximum outer iteration", false, 10000);
   p.parse_check(argc, argv);
 
