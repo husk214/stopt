@@ -1,6 +1,7 @@
 #ifndef STOPT_ALGORITHM_H
 #define STOPT_ALGORITHM_H
 
+#include "acc_sdca.hpp"
 #include "acc_svrg.hpp"
 #include "adaptreg.hpp"
 #include "catalyst.hpp"
@@ -20,6 +21,7 @@ enum class algorithm : int {
   svrg,
   saga,
   sdca,
+  acc_sdca,
   acc_svrg
 };
 }

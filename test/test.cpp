@@ -1,6 +1,6 @@
 #include "algorithm.h"
-#include "cmdline.h"
 #include "catalyst.hpp"
+#include "cmdline.h"
 
 using namespace stopt;
 using namespace Eigen;
@@ -19,7 +19,7 @@ void set_parameters_train(Rerm &r, cmdline::parser &p) {
   } else if (p.get<bool>("catalyst")) {
     catalyst<decltype(r), double>(r);
   } else {
-    r.train();    
+    r.train();
   }
 }
 
@@ -76,6 +76,9 @@ int main(int argc, char const *argv[]) {
     set_parameters_train(obj, p);
   } else if (sol == algorithm::sdca) {
     sdca<double> obj(p.get<string>("file"));
+    set_parameters_train(obj, p);
+  } else if (sol == algorithm::acc_sdca) {
+    acc_sdca<double> obj(p.get<string>("file"));
     set_parameters_train(obj, p);
   } else if (sol == algorithm::acc_svrg) {
     acc_svrg<double> obj(p.get<string>("file"));

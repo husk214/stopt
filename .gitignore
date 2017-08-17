@@ -21,4 +21,4 @@
 !/test/*.h
 !/test/CMakeLists.txt
 
-
+!/svgs
